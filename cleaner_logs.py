@@ -5,11 +5,13 @@ import fcntl
 import boto3
 from datetime import datetime
 from dotenv import load_dotenv
+from pathlib import Path
+import re
 
 # Загружаем переменные окружения из .env
 load_dotenv()
 
-VersionCleaner = 1.0
+VersionCleaner = 1.1
 class FileConfig:
     """
     Конфигурация для каждого лог-файла.
@@ -124,6 +126,40 @@ class LogCleaner:
         except Exception as e:
             print(f"[ERROR] Ошибка при обработке {cfg.path}: {e}")
 
+    def cleanup_old_leads_files(self, leads_dir: str, days: int = 7, upload_to_s3: bool = False, s3_prefix: str = "logs/leads_sub6"):
+        """
+        Удаляет файлы leads_sub6_*.txt старше указанного количества дней.
+        Формат имени: leads_sub6_DD.MM.YYYY.txt
+        """
+
+        leads_path = Path(leads_dir)
+        pattern = re.compile(r"leads_sub6_(\d{2})\.(\d{2})\.(\d{4})\.txt")
+        now = datetime.now()
+
+        print(f"[INFO] Проверка старых файлов в {leads_path}")
+
+        for file in leads_path.glob("leads_sub6_*.txt"):
+            match = pattern.match(file.name)
+            if not match:
+                continue
+
+            d, m, y = map(int, match.groups())
+            file_date = datetime(y, m, d)
+            age_days = (now - file_date).days
+
+            if age_days >= days:
+                print(f"[INFO] Найден старый файл: {file.name} ({age_days} дн.)")
+
+                # Загрузка в S3, если требуется
+                if upload_to_s3 and self.s3_client and self.s3_bucket:
+                    self.upload_to_s3(str(file), s3_prefix)
+
+                try:
+                    file.unlink()
+                    print(f"[OK] Удалён старый файл: {file.name}")
+                except Exception as e:
+                    print(f"[ERROR] Не удалось удалить {file}: {e}")
+
     def run(self):
         for cfg in self.files_config:
             self.clean_or_delete(cfg)
@@ -170,7 +206,21 @@ if __name__ == "__main__":
             upload_to_s3=True,
             s3_prefix="logs/vk_checker"
         ),
+        FileConfig(
+            "/opt/leads_postback/postback.log",
+            clean=True,
+            delete=False,
+            upload_to_s3=False,
+        ),
     ]
 
     cleaner = LogCleaner(files_config=configs)
     cleaner.run()
+
+    # Очистка старых leads_sub6 файлов
+    cleaner.cleanup_old_leads_files(
+        leads_dir="/opt/leads_postback/data",
+        days=7,
+        upload_to_s3=False,
+    )
+
