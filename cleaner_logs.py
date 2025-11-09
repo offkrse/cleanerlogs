@@ -151,6 +151,25 @@ if __name__ == "__main__":
             delete=False,
             upload_to_s3=False,
         ),
+        FileConfig(
+            "/opt/vk_checker/logs/error.log",
+            clean=True,
+            delete=False,
+            upload_to_s3=False,
+        ),
+        FileConfig(
+            "/opt/vk_checker/logs/service.log",
+            clean=True,
+            delete=False,
+            upload_to_s3=False,
+        ),
+        FileConfig(
+            "/opt/vk_checker/logs/vk_checker.log",
+            clean=True,
+            delete=False,
+            upload_to_s3=True,
+            s3_prefix="logs/vk_checker"
+        ),
     ]
 
     cleaner = LogCleaner(files_config=configs)
