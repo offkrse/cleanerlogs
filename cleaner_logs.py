@@ -11,7 +11,7 @@ import re
 # Загружаем переменные окружения из .env
 load_dotenv()
 
-VersionCleaner = 1.1
+VersionCleaner = 1.11
 class FileConfig:
     """
     Конфигурация для каждого лог-файла.
@@ -211,6 +211,12 @@ if __name__ == "__main__":
             clean=True,
             delete=False,
             upload_to_s3=False,
+        ),
+        FileConfig(
+            "/opt/auto_ads/logs/cyclop.log",
+            clean=True,
+            delete=False,
+            upload_to_s3=True,
         ),
     ]
 
