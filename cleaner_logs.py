@@ -11,7 +11,7 @@ import re
 # Загружаем переменные окружения из .env
 load_dotenv()
 
-VersionCleaner = 1.12
+VersionCleaner = 1.13
 class FileConfig:
     """
     Конфигурация для каждого лог-файла.
@@ -212,6 +212,13 @@ if __name__ == "__main__":
             delete=False,
             upload_to_s3=True,
             s3_prefix="logs/vk_checker_v3"
+        ),
+        FileConfig(
+            "/opt/vk_checker/v4/logs/vk_checker_v4.log",
+            clean=True,
+            delete=False,
+            upload_to_s3=True,
+            s3_prefix="logs/vk_checker_v4"
         ),
         FileConfig(
             "/opt/leads_postback/postback.log",
